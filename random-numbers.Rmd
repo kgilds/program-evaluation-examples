@@ -1,0 +1,384 @@
+---
+title: "Distributions"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(patchwork)
+library(truncnorm)
+```
+
+
+# Random Numbers 
+
+Exercises taken from here: https://evalsp21.classes.andrewheiss.com/example/random-numbers/
+
+## Uniform Distribution
+
+Every number is equally likely.
+
+Functions to go with uniform distributions
+
+```{r}
+possible_answers <- c(1, 2, 3, 4, 5, 6) 
+sample(possible_answers, size = 1)
+sample(possible_answers, size = 3)
+# Choose 10 random numbers, with replacement
+sample(possible_answers, size = 10, replace = TRUE)
+
+# Choose 8 numbers between 1 and 6, but don't replace them.
+# This won't work!
+sample(possible_answers, size = 8)
+```
+
+
+```{r}
+set.seed(1234)
+
+die <- tibble::tibble(value = sample(possible_answers,
+									 size = 1000,
+									 replace = TRUE))
+
+die %>%
+	count(value)
+
+
+ggplot(die, aes(x = value)) + 
+	geom_bar() + 
+	labs(title = "1,000 rolls of a single die")
+
+```
+This looks uniform!
+
+```{r}
+set.seed(1234)
+
+die <- tibble::tibble(value = sample(possible_answers,
+									 size = 10000,
+									 replace = TRUE))
+
+die %>%
+	count(value)
+
+
+ggplot(die, aes(x = value)) + 
+	geom_bar() + 
+	labs(title = "10,000 rolls of a single die")
+
+```
+Even more so.
+
+
+### runif
+
+Random numbers between 0 -1 
+
+```{r}
+runif(5)
+```
+```{r}
+runif(5, min = 35, max = 56)
+```
+```{r}
+# Generate 5 people between the ages of 18 and 35
+round(runif(5, min = 18, max = 35), 0)
+## [1] 21 28 33 34 31
+
+```
+```{r}
+set.seed(1234)
+lots_of_numbers <- tibble(x = runif(5000, min = 18, max = 35))
+
+ggplot(lots_of_numbers, aes(x = x)) +
+  geom_histogram(binwidth = 1, color = "white", boundary = 18)
+
+```
+
+## Normal Distributions
+
+```{r}
+set.seed(1234)
+
+plot_data <- tibble(x = rnorm(1000, mean = 10, sd = 4))
+head(plot_data)
+## # A tibble: 6 x 1
+##        x
+##    <dbl>
+## 1  5.17 
+## 2 11.1  
+## 3 14.3  
+## 4  0.617
+## 5 11.7  
+## 6 12.0
+
+ggplot(plot_data, aes(x = x)) +
+  geom_histogram(binwidth = 1, boundary = 0, color = "white")
+```
+```{r}
+set.seed(1234)
+
+plot_data <- tibble(x = rnorm(1000, mean = 10, sd = 10))
+head(plot_data)
+## # A tibble: 6 x 1
+##        x
+##    <dbl>
+## 1  -2.07
+## 2  12.8 
+## 3  20.8 
+## 4 -13.5 
+## 5  14.3 
+## 6  15.1
+
+ggplot(plot_data, aes(x = x)) +
+  geom_histogram(binwidth = 1, boundary = 0, color = "white")
+
+```
+
+Make fake people
+
+```{r}
+set.seed(1234)
+
+fake_people <- tibble(income = rnorm(1000, mean = 40000, sd = 15000),
+                      age = rnorm(1000, mean = 25, sd = 8),
+                      education = rnorm(1000, mean = 16, sd = 4))
+head(fake_people)
+## # A tibble: 6 x 3
+##   income   age education
+##    <dbl> <dbl>     <dbl>
+## 1 21894. 15.4      12.1 
+## 2 44161. 27.4      15.6 
+## 3 56267. 12.7      15.6 
+## 4  4815. 30.1      20.8 
+## 5 46437. 30.6       9.38
+## 6 47591.  9.75     11.8
+
+fake_income <- ggplot(fake_people, aes(x = income)) +
+  geom_histogram(binwidth = 5000, color = "white", boundary = 0) +
+  labs(title = "Simulated income")
+
+fake_age <- ggplot(fake_people, aes(x = age)) +
+  geom_histogram(binwidth = 2, color = "white", boundary = 0) +
+  labs(title = "Simulated age")
+
+fake_education <- ggplot(fake_people, aes(x = education)) +
+  geom_histogram(binwidth = 2, color = "white", boundary = 0) +
+  labs(title = "Simulated education")
+
+fake_income + fake_age + fake_education
+```
+```{r}
+set.seed(1234)
+
+plot_data <- tibble(fake_age = rnorm(1000, mean = 14, sd = 5))
+head(plot_data)
+## # A tibble: 6 x 1
+##   fake_age
+##      <dbl>
+## 1     7.96
+## 2    15.4 
+## 3    19.4 
+## 4     2.27
+## 5    16.1 
+## 6    16.5
+
+ggplot(plot_data, aes(x = fake_age)) +
+  geom_histogram(binwidth = 2, color = "white", boundary = 0)
+
+```
+
+Negative values for age does not makes sense. You can use the `rtruncnorm` function to specify a range of values. From the library `(truncnorm)`
+
+```{r}
+set.seed(1234)
+
+plot_data <- tibble(fake_age = rtruncnorm(1000, mean = 14, sd = 5, a = 12, b = 21))
+head(plot_data)
+## # A tibble: 6 x 1
+##   fake_age
+##      <dbl>
+## 1     15.4
+## 2     19.4
+## 3     16.1
+## 4     16.5
+## 5     14.3
+## 6     18.8
+
+ggplot(plot_data, aes(x = fake_age)) +
+  geom_histogram(binwidth = 1, color = "white", boundary = 0)
+```
+
+### Beta Distributions
+
+Good for left skewed distirubtions.  Good for items like percentages or proportions. 100 based exams. 
+
+Beta distributions take two paramets
+
+shape 1
+shape 2
+
+
+
+
+Beta distriubtions are good at modeling probabilities of things. shape 1 and shape 2 represent specific parts of a probability formula. 
+
+
+Example Test worth 10 points. Most people get 6 points. 
+
+6 / 6 + 4
+
+```{r}
+set.seed(1234)
+
+plot_data <- tibble(exam_score = rbeta(1000, shape1 = 6, shape2 = 4)) %>%
+  # rbeta() generates numbers between 0 and 1, so multiply everything by 10 to
+  # scale up the exam scores
+  mutate(exam_score = exam_score * 10)
+
+ggplot(plot_data, aes(x = exam_score)) +
+  geom_histogram(binwidth = 1, color = "white") +
+  scale_x_continuous(breaks = 0:10)
+```
+
+
+
+```{r}
+ggplot() +
+  geom_function(fun = dbeta, args = list(shape1 = 6, shape2 = 4))
+
+```
+
+```{r}
+ggplot() +
+  geom_function(fun = dbeta, args = list(shape1 = 60, shape2 = 40))
+
+```
+
+```{r}
+
+ggplot() +
+  geom_function(fun = dbeta, args = list(shape1 = 9, shape2 = 1), color = "blue") +
+  geom_function(fun = dbeta, args = list(shape1 = 1, shape2 = 9), color = "red")
+
+
+```
+
+Play with shapes you want to emulate. 
+
+```{r}
+ggplot() +
+  geom_function(fun = dbeta, args = list(shape1 = 5, shape2 = 5), color = "blue") +
+  geom_function(fun = dbeta, args = list(shape1 = 2, shape2 = 5), color = "red") +
+  geom_function(fun = dbeta, args = list(shape1 = 80, shape2 = 23), color = "orange") +
+  geom_function(fun = dbeta, args = list(shape1 = 13, shape2 = 17), color = "brown")
+
+```
+
+```{r}
+set.seed(1234)
+
+plot_data <- tibble(thing = rbeta(1000, shape1 = 2, shape2 = 5)) %>%
+  mutate(thing = thing * 100)
+head(plot_data)
+## # A tibble: 6 x 1
+##   thing
+##   <dbl>
+## 1 10.1 
+## 2 34.5 
+## 3 55.3 
+## 4  2.19
+## 5 38.0 
+## 6 39.9
+
+ggplot(plot_data, aes(x = thing)) +
+  geom_histogram(binwidth = 2, color = "white", boundary = 0)
+```
+
+
+### Binomial Distributions
+
+Outcome variables: yes/no, treated/not treated, success/fail
+
+
+
+
+```{r}
+set.seed(1234)
+
+# Choose 5 random T/F values
+possible_things <- c(TRUE, FALSE)
+sample(possible_things, 5, replace = TRUE)
+## [1] FALSE FALSE FALSE FALSE  TRUE
+
+```
+
+```{r}
+set.seed(1234)
+candidates <- c("Person 1", "Person 2")
+sample(candidates, size = 1, prob = c(0.8, 0.2))
+```
+
+```{r}
+set.seed(1234)
+fake_elections <- tibble(winner = sample(candidates,
+                                         size = 1000,
+                                         prob = c(0.8, 0.2),
+                                         replace = TRUE))
+fake_elections %>%
+  count(winner)
+## # A tibble: 2 x 2
+##   winner       n
+##   <chr>    <int>
+## 1 Person 1   792
+## 2 Person 2   208
+
+ggplot(fake_elections, aes(x = winner)) +
+  geom_bar()
+
+```
+
+rbinom() and arguments size and prob
+
+
+
+```{r}
+set.seed(1234)
+
+rbinom(5, size = 20, prob = 0.6)
+
+```
+```{r}
+set.seed(12345)
+
+plot_data <- tibble(thing = rbinom(2000, 1, prob = 0.6)) %>%
+  # Make this a factor since it's basically a yes/no categorical variable
+  mutate(thing = factor(thing))
+
+plot_data %>%
+  count(thing) %>%
+  mutate(proportion = n / sum(n))
+## # A tibble: 2 x 3
+##   thing     n proportion
+##   <fct> <int>      <dbl>
+## 1 0       840      0.42 
+## 2 1      1160      0.580
+
+ggplot(plot_data, aes(x = thing)) +
+  geom_bar()
+```
+
+## Poisson distribution
+
+rpois()
+lambda mysterious. 
+
+"hat’s a Poisson process: a bunch of independent random events that combine into grouped events"
+
+
+```{r}
+
+
+
+```
+
